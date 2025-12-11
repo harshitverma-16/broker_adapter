@@ -1,4 +1,4 @@
-from Zerodha.api.zerodha_adapter import ZerodhaAdapter
+from Zerodha.zerodha_adapter import ZerodhaAdapter
 
 api_key = "xxx"
 api_secret = "yyy"

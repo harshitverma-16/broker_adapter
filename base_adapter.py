@@ -11,7 +11,15 @@ class BaseAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_positions(self):
+    def get_orders(self):
+        pass
+
+    @abstractmethod
+    def cancel_order(self, order_id):
+        pass
+
+    @abstractmethod
+    def cancel_order(self, order_id):
         pass
 
     @abstractmethod
