@@ -1,6 +1,6 @@
 from base_adapter import BaseAdapter
 from api.auth import ZerodhaAuthAPI
-from order import ZerodhaOrderAPI
+from api.order import ZerodhaOrderAPI
 
 class ZerodhaAdapter(BaseAdapter):
 
