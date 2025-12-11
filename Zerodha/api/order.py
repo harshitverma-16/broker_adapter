@@ -27,3 +27,15 @@ class ZerodhaOrderAPI:
         res = requests.post(url, headers=headers, data=payload)
         res.raise_for_status()
         return res.json()
+    
+    def cancel_order(self, order_id):
+        url = f"{self.BASE_URL}/orders/regular/{order_id}"
+
+        headers = {
+            "X-Kite-Version": "3",
+            "Authorization": f"token {self.api_key}:{self.access_token}"
+        }
+
+        res = requests.delete(url, headers=headers)
+        res.raise_for_status()
+        return res.json()
