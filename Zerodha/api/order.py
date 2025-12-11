@@ -1,16 +1,29 @@
+import requests
+
 class ZerodhaOrderAPI:
-    def __init__(self, adapter):
-        self.adapter = adapter
+    BASE_URL = "https://api.kite.trade"
 
-    def place_order(self, order):
-        data = {
-            "tradingsymbol": order.symbol,
-            "quantity": order.qty,
-            "price": order.price,
-            "transaction_type": order.side,
-            "order_type": order.order_type
+    def __init__(self, access_token, api_key):
+        self.access_token = access_token
+        self.api_key = api_key
+
+    def place_order(self, symbol, qty, order_type):
+        url = f"{self.BASE_URL}/orders/regular"
+        
+        headers = {
+            "X-Kite-Version": "3",
+            "Authorization": f"token {self.api_key}:{self.access_token}"
         }
-        return self.adapter._post("/orders/regular", data)
 
-    def cancel_order(self, order_id):
-        return self.adapter._post(f"/orders/{order_id}/cancel")
+        payload = {
+            "tradingsymbol": symbol,
+            "quantity": qty,
+            "transaction_type": order_type,
+            "order_type": "MARKET",
+            "product": "MIS",
+            "exchange": "NSE"
+        }
+
+        res = requests.post(url, headers=headers, data=payload)
+        res.raise_for_status()
+        return res.json()
