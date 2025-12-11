@@ -61,7 +61,7 @@ class ZerodhaOrderAPI:
 
         res = requests.delete(url, headers=headers)
         res.raise_for_status()
-        return res.json()
+        return res.json()     # change to the appropriate response
     
 
     # Retrieve Orders
