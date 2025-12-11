@@ -21,7 +21,7 @@ class ZerodhaAdapter(BaseAdapter):
         return self.order_api.place_order(symbol, qty, order_type)
 
     def get_positions(self):
-        pass
+        return self.order_api.get_orders()
 
     def logout(self):
         self.access_token = None
