@@ -1,3 +1,53 @@
+from abc import ABC, abstractmethod
+import websocket
+import threading
+
+class BaseWebSocket(ABC):
+
+    def __init__(self, ws_url):
+        self.ws_url = ws_url
+        self.ws = None
+
+    def connect(self):
+        self.ws = websocket.WebSocketApp(
+            self.ws_url,
+            on_open=self._on_open,
+            on_message=self._on_message,
+            on_close=self._on_close,
+            on_error=self._on_error
+        )
+
+        thread = threading.Thread(target=self.ws.run_forever, daemon=True)
+        thread.start()
+
+    def _on_open(self, ws):
+        self.on_open()
+
+    def _on_message(self, ws, message):
+        self.on_message(message)
+
+    def _on_close(self, ws, close_status_code, close_msg):
+        self.on_close()
+
+    def _on_error(self, ws, error):
+        print("WebSocket error:", error)
+
+    # ----- Methods child must implement -----
+    @abstractmethod
+    def on_open(self):
+        pass
+
+    @abstractmethod
+    def on_message(self, message):
+        pass
+
+    @abstractmethod
+    def on_close(self):
+        pass
+
+
+
+
 # import websocket
 # import threading
 # import json
