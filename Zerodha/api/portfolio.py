@@ -22,7 +22,7 @@ class ZerodhaPortfolioAPI:
         return res.json()
     
     # Get Positions
-    def get_postions(self):
+    def get_positions(self):
         url = f"{self.BASE_URL}/portfolio/positions"
 
         headers = {

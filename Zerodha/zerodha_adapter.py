@@ -41,6 +41,6 @@ class ZerodhaAdapter(BaseAdapter):
         return self.portfolio_api.get_holdings()
     
     def get_positions(self):
-        return self.portfolio_api.get_postions()
+        return self.portfolio_api.get_positions()
 
     
