@@ -1,4 +1,4 @@
-from base_adapter import BaseAdapter
+from base.base_adapter import BaseAdapter
 from api.auth import ZerodhaAuthAPI
 from api.order import ZerodhaOrderAPI
 from api.portfolio import ZerodhaPortfolioAPI
