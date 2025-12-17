@@ -23,9 +23,9 @@ class ZerodhaWebSocket:
         self.tokens: List[int] = []
         self.mode = MODE_LTP
 
-    # ------------------------------------------------
-    # Start websocket with auto-reconnect
-    # ------------------------------------------------
+
+    # Start websocket 
+
     async def start(self):
         while self.should_run:
             try:
@@ -39,9 +39,9 @@ class ZerodhaWebSocket:
                     await self.ws.close()
                 await asyncio.sleep(3)
 
-    # ------------------------------------------------
+
     # Connect
-    # ------------------------------------------------
+
     async def connect(self):
         self.ws = await websockets.connect(
             self.url,
@@ -54,9 +54,9 @@ class ZerodhaWebSocket:
         if self.tokens:
             await self.subscribe(self.tokens, self.mode)
 
-    # ------------------------------------------------
+
     # Subscribe
-    # ------------------------------------------------
+
     async def subscribe(self, tokens: List[int], mode=MODE_LTP):
         await self.connected.wait()
 
@@ -73,9 +73,9 @@ class ZerodhaWebSocket:
             "v": [mode, tokens]
         }))
 
-    # ------------------------------------------------
+
     # Listen
-    # ------------------------------------------------
+
     async def listen(self):
         async for message in self.ws:
             if isinstance(message, bytes):
@@ -85,9 +85,8 @@ class ZerodhaWebSocket:
             else:
                 self.handle_text(message)
 
-    # ------------------------------------------------
+
     # Handle text messages
-    # ------------------------------------------------
     def handle_text(self, message: str):
         try:
             data = json.loads(message)
@@ -96,9 +95,9 @@ class ZerodhaWebSocket:
         except json.JSONDecodeError:
             pass
 
-    # ------------------------------------------------
+
     # Binary parsing
-    # ------------------------------------------------
+
     def parse_binary(self, packet: bytes):
         ticks = []
         offset = 0
@@ -160,9 +159,9 @@ class ZerodhaWebSocket:
 
         return None
 
-    # ------------------------------------------------
+
     # Stop
-    # ------------------------------------------------
+
     async def stop(self):
         self.should_run = False
         if self.ws:

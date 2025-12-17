@@ -44,8 +44,15 @@ class ZerodhaAdapter(BaseAdapter):
             {"event": "LOGOUT"}
         )
 
+    def _ensure_login(self):
+        if not self.access_token or not self.order_api:
+            raise RuntimeError(
+                "User not logged in. Call login(request_token) first."
+            )
+
     # Orders API
     def place_order(self, symbol, qty, order_type):
+        self._ensure_login()
         response = self.order_api.place_order(symbol, qty, order_type)
 
         self.redis_pub.publish(
@@ -63,6 +70,7 @@ class ZerodhaAdapter(BaseAdapter):
         return response
 
     def modify_order(self, order_id, order_type, qty, validity):
+        self._ensure_login()
         response = self.order_api.modify_order(order_id, order_type, qty, validity)
 
         self.redis_pub.publish(
@@ -76,6 +84,7 @@ class ZerodhaAdapter(BaseAdapter):
         return response
 
     def cancel_order(self, order_id):
+        self._ensure_login()
         response = self.order_api.cancel_order(order_id)
 
         self.redis_pub.publish(
@@ -89,6 +98,7 @@ class ZerodhaAdapter(BaseAdapter):
         return response
 
     def get_orders(self):
+        self._ensure_login()
         response = self.order_api.get_orders()
 
         self.redis_pub.publish(
@@ -102,6 +112,7 @@ class ZerodhaAdapter(BaseAdapter):
 
     # Portfolio API
     def get_holdings(self):
+        self._ensure_login()
         response = self.portfolio_api.get_holdings()
 
         self.redis_pub.publish(
@@ -114,6 +125,7 @@ class ZerodhaAdapter(BaseAdapter):
         return response
 
     def get_positions(self):
+        self._ensure_login()
         response = self.portfolio_api.get_positions()
 
         self.redis_pub.publish(
