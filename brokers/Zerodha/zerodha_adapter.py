@@ -1,3 +1,4 @@
+from urllib import response
 from base.base_adapter import BaseAdapter
 from api.auth import ZerodhaAuthAPI
 from api.order import ZerodhaOrderAPI
@@ -51,9 +52,19 @@ class ZerodhaAdapter(BaseAdapter):
             )
 
     # Orders API
-    def place_order(self, symbol, qty, order_type):
+
+    def place_order(self, symbol, qty, order_type, transaction_type="BUY", product="MIS", exchange="NSE"):
         self._ensure_login()
-        response = self.order_api.place_order(symbol, qty, order_type)
+    
+    # 2. Pass these new arguments to the order_api
+        response = self.order_api.place_order(
+            symbol, 
+            qty, 
+            order_type, 
+            transaction_type, 
+            product, 
+            exchange
+        )
 
         self.redis_pub.publish(
             "zerodha.orders",
@@ -62,7 +73,9 @@ class ZerodhaAdapter(BaseAdapter):
                 "request": {
                     "symbol": symbol,
                     "qty": qty,
-                    "order_type": order_type
+                    "order_type": order_type,
+                    "transaction_type": transaction_type, # Add to logs
+                    "product": product,                    # Add to logs
                 },
                 "response": response
             }
