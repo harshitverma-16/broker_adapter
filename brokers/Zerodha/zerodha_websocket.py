@@ -4,6 +4,7 @@ import struct
 import signal
 import websockets
 from typing import List, Optional
+from utils.redis_publisher import RedisPublisher
 
 WS_URL = "wss://ws.kite.trade"
 
@@ -23,8 +24,10 @@ class ZerodhaWebSocket:
         self.tokens: List[int] = []
         self.mode = MODE_LTP
 
+        self.redis = RedisPublisher()
 
-    # Start websocket 
+
+    # Start websocket (auto reconnect)
 
     async def start(self):
         while self.should_run:
@@ -81,19 +84,29 @@ class ZerodhaWebSocket:
             if isinstance(message, bytes):
                 for tick in self.parse_binary(message):
                     if tick:
-                        print(tick)
+                        self.on_tick(tick)
             else:
                 self.handle_text(message)
 
 
     # Handle text messages
+
     def handle_text(self, message: str):
         try:
             data = json.loads(message)
             if data.get("type") == "error":
-                print(f"Error message: {data}")
+                print("WebSocket error:", data)
         except json.JSONDecodeError:
             pass
+
+
+    # Redis publish hook
+
+    def on_tick(self, tick: dict):
+        """
+        Publish every tick to Redis
+        """
+        self.redis.publish("zerodha.ticks", tick)
 
 
     # Binary parsing
@@ -148,13 +161,13 @@ class ZerodhaWebSocket:
 
         if len(pkt) == 184:
             volume = struct.unpack_from(">I", pkt, 8)[0]
-            open_interest = struct.unpack_from(">I", pkt, 12)[0]
+            oi = struct.unpack_from(">I", pkt, 12)[0]
             return {
                 "instrument_token": instrument_token,
                 "mode": "FULL",
                 "last_price": last_price,
                 "volume": volume,
-                "open_interest": open_interest
+                "open_interest": oi
             }
 
         return None
@@ -166,4 +179,3 @@ class ZerodhaWebSocket:
         self.should_run = False
         if self.ws:
             await self.ws.close()
-
