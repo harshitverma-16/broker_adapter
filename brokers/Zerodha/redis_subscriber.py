@@ -14,7 +14,7 @@ pubsub = redis_client.pubsub()
 pubsub.subscribe(
     "zerodha.auth",
     "zerodha.orders",
-    "zerodha.portfolio"
+    "zerodha.portfolio",
     "zerodha.ticks"
 )
 

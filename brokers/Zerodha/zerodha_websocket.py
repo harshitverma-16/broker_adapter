@@ -104,9 +104,16 @@ class ZerodhaWebSocket:
 
     def on_tick(self, tick: dict):
         """
-        Publish every tick to Redis
+        Publish every tick to Redis without blocking the loop
         """
-        self.redis.publish("zerodha.ticks", tick)
+        # Get the running event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # Run the synchronous redis publish in a separate thread
+            loop.run_in_executor(None, self.redis.publish, "zerodha.ticks", tick)
+        except RuntimeError:
+            # Fallback if no loop is running (e.g., during testing)
+            self.redis.publish("zerodha.ticks", tick)
 
 
     # Binary parsing
