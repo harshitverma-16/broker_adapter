@@ -1,80 +1,170 @@
 import asyncio
 import json
 import struct
-import time
+import signal
 import websockets
-from typing import List, Dict, Callable
-from utils.redis_publisher import RedisPublisher
+from typing import List, Optional
+
+WS_URL = "wss://ws.kite.trade"
+
+MODE_LTP = "ltp"
+MODE_QUOTE = "quote"
+MODE_FULL = "full"
 
 
 class ZerodhaWebSocket:
+    def __init__(self, api_key: str, access_token: str):
+        self.url = f"{WS_URL}?api_key={api_key}&access_token={access_token}"
+        self.ws: Optional[websockets.WebSocketClientProtocol] = None
 
-    WS_URL = "wss://ws.kite.trade"
-    MODE_LTP = "ltp"
+        self.connected = asyncio.Event()
+        self.should_run = True
 
-    def __init__(self, api_key, access_token):
-        self.url = f"{self.WS_URL}?api_key={api_key}&access_token={access_token}"
-        self.redis_pub = RedisPublisher()
-        self.websocket = None
-        self.subscribed_tokens = []
+        self.tokens: List[int] = []
+        self.mode = MODE_LTP
 
+    # ------------------------------------------------
+    # Start websocket with auto-reconnect
+    # ------------------------------------------------
+    async def start(self):
+        while self.should_run:
+            try:
+                await self.connect()
+                await self.listen()
+            except Exception as exc:
+                print(f"WebSocket error: {exc}")
+            finally:
+                self.connected.clear()
+                if self.ws:
+                    await self.ws.close()
+                await asyncio.sleep(3)
+
+    # ------------------------------------------------
+    # Connect
+    # ------------------------------------------------
     async def connect(self):
-        self.websocket = await websockets.connect(
+        self.ws = await websockets.connect(
             self.url,
-            ping_interval=None,
+            ping_interval=20,
+            ping_timeout=10,
             compression=None
         )
-        print("Zerodha WebSocket connected")
+        self.connected.set()
 
-        await self.listen()
+        if self.tokens:
+            await self.subscribe(self.tokens, self.mode)
 
-    async def subscribe(self, tokens: List[int]):
-        self.subscribed_tokens = tokens
+    # ------------------------------------------------
+    # Subscribe
+    # ------------------------------------------------
+    async def subscribe(self, tokens: List[int], mode=MODE_LTP):
+        await self.connected.wait()
 
-        await self.websocket.send(json.dumps({
+        self.tokens = tokens
+        self.mode = mode
+
+        await self.ws.send(json.dumps({
             "a": "subscribe",
             "v": tokens
         }))
 
-        await self.websocket.send(json.dumps({
+        await self.ws.send(json.dumps({
             "a": "mode",
-            "v": ["ltp", tokens]
+            "v": [mode, tokens]
         }))
 
-        print("Subscribed to tokens")
-
+    # ------------------------------------------------
+    # Listen
+    # ------------------------------------------------
     async def listen(self):
-        while True:
-            message = await self.websocket.recv()
+        async for message in self.ws:
+            if isinstance(message, bytes):
+                for tick in self.parse_binary(message):
+                    if tick:
+                        print(tick)
+            else:
+                self.handle_text(message)
 
-            if isinstance(message, bytes) and len(message) == 1:
-                continue  # heartbeat
+    # ------------------------------------------------
+    # Handle text messages
+    # ------------------------------------------------
+    def handle_text(self, message: str):
+        try:
+            data = json.loads(message)
+            if data.get("type") == "error":
+                print(f"Error message: {data}")
+        except json.JSONDecodeError:
+            pass
 
-            ticks = self.parse_binary(message)
-            for tick in ticks:
-                self.redis_pub.publish("zerodha.ticks", tick)
-
-    def parse_binary(self, data: bytes) -> List[Dict]:
+    # ------------------------------------------------
+    # Binary parsing
+    # ------------------------------------------------
+    def parse_binary(self, packet: bytes):
         ticks = []
+        offset = 0
 
-        packet_count = struct.unpack(">H", data[:2])[0]
-        offset = 2
+        if len(packet) < 2:
+            return ticks
 
-        for _ in range(packet_count):
-            length = struct.unpack(">H", data[offset:offset + 2])[0]
+        num_packets = struct.unpack_from(">H", packet, offset)[0]
+        offset += 2
+
+        for _ in range(num_packets):
+            if offset + 2 > len(packet):
+                break
+
+            pkt_len = struct.unpack_from(">H", packet, offset)[0]
             offset += 2
 
-            packet = data[offset:offset + length]
-            offset += length
+            pkt = packet[offset: offset + pkt_len]
+            offset += pkt_len
 
-            if len(packet) == 8:
-                token = struct.unpack(">I", packet[:4])[0]
-                price = struct.unpack(">i", packet[4:8])[0] / 100.0
-
-                ticks.append({
-                    "instrument_token": token,
-                    "ltp": price,
-                    "timestamp": int(time.time() * 1000)
-                })
+            tick = self.parse_tick(pkt)
+            ticks.append(tick)
 
         return ticks
+
+    def parse_tick(self, pkt: bytes):
+        if len(pkt) < 8:
+            return None
+
+        instrument_token = struct.unpack_from(">I", pkt, 0)[0]
+        last_price = struct.unpack_from(">I", pkt, 4)[0] / 100
+
+        if len(pkt) == 8:
+            return {
+                "instrument_token": instrument_token,
+                "mode": "LTP",
+                "last_price": last_price
+            }
+
+        if len(pkt) == 44:
+            volume = struct.unpack_from(">I", pkt, 8)[0]
+            return {
+                "instrument_token": instrument_token,
+                "mode": "QUOTE",
+                "last_price": last_price,
+                "volume": volume
+            }
+
+        if len(pkt) == 184:
+            volume = struct.unpack_from(">I", pkt, 8)[0]
+            open_interest = struct.unpack_from(">I", pkt, 12)[0]
+            return {
+                "instrument_token": instrument_token,
+                "mode": "FULL",
+                "last_price": last_price,
+                "volume": volume,
+                "open_interest": open_interest
+            }
+
+        return None
+
+    # ------------------------------------------------
+    # Stop
+    # ------------------------------------------------
+    async def stop(self):
+        self.should_run = False
+        if self.ws:
+            await self.ws.close()
+
