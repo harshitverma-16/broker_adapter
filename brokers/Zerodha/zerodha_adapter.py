@@ -56,7 +56,7 @@ class ZerodhaAdapter(BaseAdapter):
     def place_order(self, symbol, qty, order_type, transaction_type="BUY", product="MIS", exchange="NSE"):
         self._ensure_login()
     
-    # 2. Pass these new arguments to the order_api
+    
         response = self.order_api.place_order(
             symbol, 
             qty, 
@@ -74,8 +74,8 @@ class ZerodhaAdapter(BaseAdapter):
                     "symbol": symbol,
                     "qty": qty,
                     "order_type": order_type,
-                    "transaction_type": transaction_type, # Add to logs
-                    "product": product,                    # Add to logs
+                    "transaction_type": transaction_type,
+                    "product": product,                    
                 },
                 "response": response
             }
