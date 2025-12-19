@@ -19,9 +19,5 @@ class BaseAdapter(ABC):
         pass
 
     @abstractmethod
-    def cancel_order(self, order_id):
-        pass
-
-    @abstractmethod
     def logout(self):
         pass
