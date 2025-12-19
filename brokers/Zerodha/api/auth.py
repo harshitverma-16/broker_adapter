@@ -28,3 +28,36 @@ class ZerodhaAuthAPI:
         res = requests.post(TOKEN_URL, data=payload)
         res.raise_for_status()
         return res.json()["data"]["access_token"]
+    
+
+
+
+
+
+#     # ------------------------Testing-----------------------------
+# my_api_key = "2i4ayyawcrptt24h" 
+# my_api_secret = "2lxel09zt42jim5veokpgg6slrih2fpa"
+
+# # Create an object of the class
+# zerodha = ZerodhaAuthAPI(my_api_key, my_api_secret, "http://localhost")
+
+# print("--- Zerodha Login Flow ---")
+
+# # GET LOGIN URL
+# login_link = zerodha.generate_login_url()
+# print(f"1. Open this URL :\n{login_link}")
+
+# # INPUT
+# req_token = input("\n2. Paste the 'request_token' from the browser URL here: ").strip()
+
+# # 4. VERIFY AUTHENTICATION
+# if req_token:
+#     try:
+#         access_token = zerodha.exchange_token(req_token)
+#         print("\nSUCCESS! Authentication successful.")
+#         print(f"Access Token: {access_token}")
+#         print("(successful working)")
+#     except Exception as e:
+#         print(f"\nERROR: {e}")
+# else:
+#     print("\nNo token provided.")

@@ -1,12 +1,12 @@
 from urllib import response
-from base.base_adapter import BaseAdapter
+#from base.base_adapter import BaseAdapter
 from api.auth import ZerodhaAuthAPI
 from api.order import ZerodhaOrderAPI
 from api.portfolio import ZerodhaPortfolioAPI
 from utils.redis_publisher import RedisPublisher
 
 
-class ZerodhaAdapter(BaseAdapter):
+class ZerodhaAdapter:
 
     def __init__(self, api_key, api_secret, redirect_url):
         self.api_key = api_key
@@ -20,6 +20,23 @@ class ZerodhaAdapter(BaseAdapter):
 
         # Redis publisher
         self.redis_pub = RedisPublisher()
+
+
+        print("ZERODHA ADAPTER INITIALIZED")
+        print("Please login using this URL:")
+        print(self.auth_api.generate_login_url())
+
+        try:
+            token = input("Paste 'request_token' from browser here: ").strip()
+            if token:
+                self.login(token)
+                print("!! Login Successful during initialization !!")
+        except Exception as e:
+            print(f"!! Login Failed during initialization: {e} !!")
+
+    def get_login_url(self):
+        """Exposes the login URL generation from the Auth API."""
+        return self.auth_api.generate_login_url()
 
     # Authentication
     def login(self, request_token):
@@ -149,3 +166,24 @@ class ZerodhaAdapter(BaseAdapter):
             }
         )
         return response
+
+
+
+# -----------------------Testing----------------------
+
+#client = ZerodhaAdapter("2i4ayyawcrptt24h", "2lxel09zt42jim5veokpgg6slrih2fpa", "http://localhost")
+
+#client.logout()
+#print("Logged out successfully.")
+
+# login_url = client.get_login_url()
+# print(f"Open this URL in browser:\n{login_url}")
+
+# req_token = input("Enter the request token from URL: ").strip()
+# access_token = client.login(req_token)
+# print(f"Access Token: {access_token}") 
+
+# print("logout now")
+# client.logout()
+# print("Logged out successfully.")
+

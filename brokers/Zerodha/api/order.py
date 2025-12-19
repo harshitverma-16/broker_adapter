@@ -8,7 +8,7 @@ class ZerodhaOrderAPI:
         self.api_key = api_key
 
     # Place Order
-    def place_order(self, symbol, qty, order_type, transaction_type="BUY", product="MIS", exchange="NSE"):
+    def place_order(self, symbol, qty, order_type, transaction_type="BUY", product="MIS", exchange="NSE", validity="DAY"):
         url = f"{self.BASE_URL}/orders/regular"
         
         headers = {
@@ -22,7 +22,8 @@ class ZerodhaOrderAPI:
             "transaction_type": transaction_type,
             "order_type": order_type,
             "product": product,
-            "exchange": exchange
+            "exchange": exchange,
+            "validity": validity
         }
 
         res = requests.post(url, headers=headers, data=payload)
