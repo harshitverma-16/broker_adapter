@@ -77,3 +77,14 @@ class ZerodhaOrderAPI:
         res = requests.get(url, headers=headers)
         res.raise_for_status()
         return res.json()
+    
+
+    def get_order_history(self, order_id):
+        url = f"{self.BASE_URL}/orders/{order_id}"
+        headers = {
+            "Authorization": f"token {self.api_key}:{self.access_token}"
+        }
+         
+        res = requests.get(url, headers=headers)
+        res.raise_for_status()
+        return res.json()
