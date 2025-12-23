@@ -181,12 +181,12 @@ class ZerodhaConnector:
         return {
             "exchange": exchange,
             "symbol": tradingsymbol,
-            "qty": int(data.get("quantity", 1)),
-            "order_type": data.get("orderType", "LIMIT"),    # LIMIT, MARKET, SL, SL-M
-            "transaction_type": data.get("orderSide", "BUY"),# BUY / SELL
+            "qty": int(data.get("quantity")),
+            "order_type": data.get("orderType"),    # LIMIT, MARKET, SL, SL-M
+            "transaction_type": data.get("orderSide"),# BUY / SELL
             "product": product,
-            "price": float(data.get("price", 0)),            # Required for LIMIT
-            "trigger_price": float(data.get("stopPrice", 0)),# Mapped from stopPrice
+            "price": float(data.get("price")),            # Required for LIMIT
+            "trigger_price": float(data.get("stopPrice")),# Mapped from stopPrice
             "validity": validity
         }
 
