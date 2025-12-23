@@ -31,7 +31,17 @@ class ZerodhaAdapter:
         self.monitor_thread = None
 
         print("ZERODHA ADAPTER INITIALIZED")
-        print("Status: Offline (Waiting for LOGIN command via Redis)")
+#       print("Status: Offline (Waiting for LOGIN command via Redis)")
+        print("Login using this URL:")
+        print(self.auth_api.generate_login_url())
+
+        try:
+            token = input("Paste 'request_token' from browser here: ").strip()
+            if token:
+                self.login(token)
+                print("Login Successful")
+        except Exception as e:
+            print(f"Login Failed: {e} !!")
 
     def get_login_url(self):
         """Exposes the login URL generation from the Auth API."""

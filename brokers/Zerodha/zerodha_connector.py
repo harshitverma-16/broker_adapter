@@ -29,6 +29,14 @@ class ZerodhaConnector:
         self.pubsub = self.redis.pubsub()
         self.is_running = False
 
+        if self.adapter.access_token:
+            print("'LOGIN_SUCCESS' to Blitz...")
+            self.redis.publish(CH_RESPONSES, json.dumps({
+                "request_id": "STARTUP",
+                "status": "LOGIN_SUCCESS",
+                "data": {"message": "Authenticated"}
+            }))
+
     def start(self):
         """Starts the main listener loop."""
         self.pubsub.subscribe(CH_REQUESTS)
