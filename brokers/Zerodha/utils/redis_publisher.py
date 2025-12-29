@@ -14,3 +14,4 @@ class RedisPublisher:
     def publish(self, channel: str, message: dict):
         payload = json.dumps(message)
         self.redis.publish(channel, payload)
+        
